@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    _PROJECT_NAME: "order"
+    _PROJECT_NAME: "user17-order"
     _DIR_NAME: "order"
     _NAMESPACE: "skmall"
 

@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    _PROJECT_NAME: "warehouse"
+    _PROJECT_NAME: "user17-warehouse"
     _DIR_NAME: "warehouse"
     _NAMESPACE: "skmall"
 

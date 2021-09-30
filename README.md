@@ -6,7 +6,7 @@ SK MALL
 
 # Table of contents
 
-- [백신예약](#---)
+- [SK MALL](#---)
   - [서비스 시나리오](#서비스-시나리오)
   - [체크포인트](#체크포인트)
   - [분석/설계](#분석설계)
@@ -26,31 +26,28 @@ SK MALL
 
 # 서비스 시나리오
 
-백신 예약 서비스
+SK MALL 서비스
 
 기능적 요구사항
-1. 고객이 날짜, 병원을 선택하고 백신 예약 승인 요청을 한다.
-2. 요청이 승인되면 백신관리에 전달 된다.
-3. 백신관리에서 백신유형, 백신유효기간, 제조일자, 수량을 확인하고 예약을 완료한다.
-4. 예약이 완료되면 고객의 예약 상태를 완료로 업데이트 한다.
-5. 고객이 예약을 취소 요청을 한다.
-6. 백신관리에서 예약ID, 백신유형, 백신유효기간, 제조일자, 수량을 확인하고 예약을 취소한다.
-7. 예약이 취소되면 고객의 예약상태를 취소로 업데이트 한다.
-8. 고객은 날짜, 병원, 백신유형, 백신유효기간, 제조일자, 예약상태를 확인할 수 있다.
+1. 고객이 상품을 선택한다.
+2. 창고에 재고를 확인 후 재고가 있으면 주문한다.
+3. 주문이 성공하면 배송을 시작한다.
+4. 배송이 시작되면 주문 상태를 업데이트 하고 창고의 재고를 주문수량만큼 감소시킨다.
+6. 고객이 주문을 취소 한다.
+7. 주문이 추소되면 배송을 취소, 주문 상태를 업데이트하고, 창고의 재고를 주문취소수량만큼 증가시킨다.
 
 비기능적 요구사항
 1. 트랜잭션
-    1. 승인이 되지 않은 예약 요청은 백신 예약을 할 수 없다.  Sync 호출 
+    1. 창고의 재고가 확인되지 않은 상품은 주문할 수 없다.  Sync 호출 
 2. 장애격리
-    1. 백신관리 기능이 수행되지 않더라도 예약 요청 승인, 취소 요청을 을 받을 수 있다. Async (event-driven), Eventual Consistency
-    1. 예약 요청 승인이 과중되면 고객을 잠시동안 받지 않고 예약 요청을 잠시후에 하도록 유도한다  Circuit breaker, fallback
+    1. 배송 기능이 수행되지 않더라도 상품 주문, 주문 취소를 을 받을 수 있다. Async (event-driven), Eventual Consistency
+    1. 주문이 과중되면 주문을 잠시동안 받지 않고 주문 요청을 잠시후에 하도록 유도한다  Circuit breaker, fallback
 3. 성능
-    1. 백신 예약에 대한 정보 및 예약 상태 등을 한 화면에서 확인 할 수 있다. CQRS
+    1. 주문상태 대한 정보 한 화면에서 확인 할 수 있다. CQRS
 
 # 체크포인트
 
 - 분석 설계
-
 
   - 이벤트스토밍: 
     - 스티커 색상별 객체의 의미를 제대로 이해하여 헥사고날 아키텍처와의 연계 설계에 적절히 반영하고 있는가?
@@ -111,52 +108,41 @@ SK MALL
 ![asis](https://user-images.githubusercontent.com/90441340/132832765-2ee6cd26-2841-43cd-b9ab-666664ee2de1.jpg)
 
 ## TO-BE 조직 (Vertically-Aligned)
-![tobe](https://user-images.githubusercontent.com/90441340/132832772-01fe71e5-1545-4f20-a31e-99ab56558371.jpg)
+![1](https://user-images.githubusercontent.com/90441340/135399124-0d8d1478-2dec-41e1-b8fc-d954f6e810de.jpg)
 
 ## Event Storming 결과
-* MSAEz 로 모델링한 이벤트스토밍 결과 : http://www.msaez.io/#/storming/T57jg9xOfZNjxno4WWSzRwX0nwG2/e1a691320c2b3a0cdab793ec7b6488dc
+* MSAEz 로 모델링한 이벤트스토밍 결과 : https://www.msaez.io/#/storming/gwUip42y6gYTDeNEXyvpVgHKs7p2/acf0b090cf4293c3124c5a79baca7dbc
 
 ### 이벤트 도출
-![event1](https://user-images.githubusercontent.com/90441340/132835649-0ae59e25-46a5-4241-ba14-e56f1da4502b.jpg)
+![2](https://user-images.githubusercontent.com/90441340/135399840-9212187e-f937-4c21-8bac-65dbe3f85ad1.jpg)
 
 ### 부적격 이벤트 탈락
-![event2](https://user-images.githubusercontent.com/90441340/132835320-18abe37d-b751-4858-a5d0-01d774fc9815.jpg)
+![3](https://user-images.githubusercontent.com/90441340/135399849-4cc89441-c294-4cd6-b168-6e360cef71e3.jpg)
 
     - 과정중 도출된 잘못된 도메인 이벤트들을 걸러내는 작업을 수행함
-        - 예약 시 > CustomerAuthenticatied : 고객인증이 완료되어야 승인요청 이벤트가 발생하는 ACID 트랜잭션을 적용이 필요하므로 ReservationPlaced이벤트와 통합하여 처리
-
-### 액터, 커맨드 부착 및 어그리게잇으로 묶기
-![msaez1](https://user-images.githubusercontent.com/90441340/132937802-c4c2d493-bd1a-4a3a-8995-5f95314f05c0.jpg)
-
-- Customer의 Reservation, Approval의 Approval관리, vaccine의 vaccine관리는 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
-
-### 바운디드 컨텍스트로 묶기
-![msaez2](https://user-images.githubusercontent.com/90441340/132938090-317ce728-5447-470c-a4cd-05eb67e026ff.jpg)
-
-### 컨텍스트 매핑 (점선은 Pub/Sub, 실선은 Req/Resp)
-![event3](https://user-images.githubusercontent.com/90441340/132938176-528c04f2-7769-4a0e-b899-55328a3860af.jpg)
+        - 주문 시 > ProductRegistered : 상품등록이 완료되어야 주문 이벤트가 발생하는 ACID 트랜잭션을 적용이 필요하므로 stockIncreased, stockReduced와 통합하여 처리
 
 ### 완성된 1차 모형!
-[event4](https://user-images.githubusercontent.com/90441340/132938193-26503282-64f8-46b4-abf1-5d5c17672070.jpg)
+![image](https://user-images.githubusercontent.com/90441340/135401001-5b1f5da4-385e-4536-927d-38e185fcde90.png)
  
  - View Model 추가
 
 ### 1차 완성본에 대한 기능적/비기능적 요구사항을 커버하는지 검증
-![event5](https://user-images.githubusercontent.com/90441340/132938539-4de24525-7ec8-4b26-91ac-f99fe364a59c.jpg)
+![image](https://user-images.githubusercontent.com/90441340/135401395-8f84b71a-8173-4c16-aeaf-59eb880be011.png)
 
-    - 고객이 병원, 날짜를 선택하여 예약한다. (ok)
-    - 승인을 받는다. (ok)
-    - 예약승인이 완료되면 예약 내역이 백신관리자에게 전달된다. (ok)
-    - 백신관리자는 백신유형, 수량, 유효기간, 제조일자를 선택후 예약을 완료한다.(ok)
-    - 고객은 중간중간 예약 현황을 조회한다. (View-green sticker 의 추가로 ok)
+    - 고객이 상품을 선택하고 주문을 한다.(ok)
+    - 상품재고를 확인한다. (ok)
+    - 주문이 완료되면 배송관리시스템에 전달된다.(ok)
+    - 배송이 시작되면 창과관리시스템에서 재고를 조정한다. (ok)
+    - 고객은 중간중간 주문 현황을 조회한다. (View-green sticker 의 추가로 ok)
 
-![event6](https://user-images.githubusercontent.com/90441340/132939739-07387a65-c451-4f55-be8f-b0404b2c1096.jpg)
+![image](https://user-images.githubusercontent.com/90441340/135401474-4a7d6ce1-7eff-4262-9104-0cbfbc598552.png)
 
-    - 고객이 예약을 취소할 수 있다. (ok)
-    - 예약이 취소되면 백신예약 상태가 변경되고 백신슈형, 유효기간, 제조일자가 초기화되고, 수량이 0으로 바뀐다.(ok)  
+    - 고객이 주문을 취소할 수 있다. (ok)
+    - 주문이 취소되면 배송이 취소, 주문상태가 업데이트 되며, 재고가 수정된다. (ok)  
 
 ### 비기능 요구사항에 대한 검증
-![event4](https://user-images.githubusercontent.com/90441340/132938193-26503282-64f8-46b4-abf1-5d5c17672070.jpg)
+![image](https://user-images.githubusercontent.com/90441340/135401001-5b1f5da4-385e-4536-927d-38e185fcde90.png)
 
 - 마이크로 서비스를 넘나드는 시나리오에 대한 트랜잭션 처리
         - 예약 승인 요청 시 승인처리:  승인이 완료되지 않은 예약은 절대 받지 않는다는 정책에 따라, ACID 트랜잭션 적용. 예약 승인 요청시 승인처리에 대해서는 Request-Response 방식 처리

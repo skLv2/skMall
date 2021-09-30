@@ -145,31 +145,29 @@ SK MALL 서비스
 ![image](https://user-images.githubusercontent.com/90441340/135401001-5b1f5da4-385e-4536-927d-38e185fcde90.png)
 
 - 마이크로 서비스를 넘나드는 시나리오에 대한 트랜잭션 처리
-        - 예약 승인 요청 시 승인처리:  승인이 완료되지 않은 예약은 절대 받지 않는다는 정책에 따라, ACID 트랜잭션 적용. 예약 승인 요청시 승인처리에 대해서는 Request-Response 방식 처리
-        - 승인 완료 시 백신 관리, 예약 완료 및 예약 상태 변경 처리:  승인에서  마이크로서비스로 예약완료내역이 전달되는 과정에 있어서 vaccinemgmt 마이크로 서비스가 별도의 배포주기를 가지기 때문에 Eventual Consistency 방식으로 트랜잭션 처리함.
-        - 나머지 모든 inter-microservice 트랜잭션: 예약상태, 백신상태 등 모든 이벤트에 대해 MyPage처리 등, 데이터 일관성의 시점이 크리티컬하지 않은 모든 경우가 대부분이라 판단, Eventual Consistency 를 기본으로 채택함.
-	- 백신 관리 기능이 수행되지 않더라도 예약 승인은 365일 24시간 받을 수 있어야 한다  Async (event-driven), Eventual Consistency
-        - 승인시스템이 과중되면 사용자를 잠시동안 받지 않고 승인을 잠시후에 하도록 유도한다  Circuit breaker, fallback
+	- 주문 시 재고 확인 처리:  재고확인 완료되지 않은 주문은 절대 받지 않는다는 정책에 따라, ACID 트랜잭션 적용. 주문 처리와 재고확인에 대해서는 Request-Response 방식 처리
+	- 주문 완료 시 배송 상태 및 재고 수량 변경 처리:  주문에서  마이크로서비스로 주문내역이 전달되는 과정에 있어서  delivery, warehouse 마이크로 서비스가 별도의 배포주기를 가지기 때문에 Eventual Consistency 방식으로 트랜잭션 처리함.
+	- 나머지 모든 inter-microservice 트랜잭션: 주문상태, 재고수량 등 모든 이벤트에 대해 MyPage처리 등, 데이터 일관성의 시점이 크리티컬하지 않은 모든 경우가 대부분이라 판단, Eventual Consistency 를 기본으로 채택함.
+	- 배송 관리 기능이 수행되지 않더라도 주문은 365일 24시간 받을 수 있어야 한다  Async (event-driven), Eventual Consistency
+        - 주문시스템이 과중되면 사용자를 잠시동안 받지 않고 승인을 잠시후에 하도록 유도한다  Circuit breaker, fallback
 
 ## 헥사고날 아키텍처 다이어그램 도출
-![Hex](https://user-images.githubusercontent.com/90441340/132939649-638d8f91-b7a7-41ba-b499-8fdb90e93bef.jpg)
+![image](https://user-images.githubusercontent.com/90441340/135404310-2f5d8d45-dde7-4c42-8c83-6856a1a25705.png)
 
     - Chris Richardson, MSA Patterns 참고하여 Inbound adaptor와 Outbound adaptor를 구분함
     - 호출관계에서 PubSub 과 Req/Resp 를 구분함
     - 서브 도메인과 바운디드 컨텍스트의 분리:  각 팀의 KPI 별로 아래와 같이 관심 구현 스토리를 나눠가짐
 
-
-
 ## 구현:
 분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 BC별로 대변되는 마이크로 서비스들을 스프링부트로 구현하였다. 구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각자의 포트넘버는 8081 ~ 808n 이다)
 ```
-   cd reservation
+   cd order
    mvn spring-boot:run
    
-   cd approval
+   cd delivery
    mvn spring-boot:run
    
-   cd vaccinemgmt
+   cd warehouse
    mvn spring-boot:run
    
    cd mypage
@@ -183,8 +181,8 @@ SK MALL 서비스
 
 ## CQRS
 
-백신 예약/취소/매핑 등 총 Status 및 백신 종류 에 대하여 고객이 조회 할 수 있도록 CQRS 로 구현하였다.
-- reservation, approval, vaccinemgmt 개별 Aggregate Status 를 통합 조회하여 성능 Issue 를 사전에 예방할 수 있다.
+상품 주문/취소/매핑 등 총 Status 및 백신 종류 에 대하여 고객이 조회 할 수 있도록 CQRS 로 구현하였다.
+- order, delivery, warehouse 개별 Aggregate Status 를 통합 조회하여 성능 Issue 를 사전에 예방할 수 있다.
 - 비동기식으로 처리되어 발행된 이벤트 기반 Kafka 를 통해 수신/처리 되어 별도 Table 에 관리한다
 - Table 모델링
  <img width="546" alt="스크린샷 2021-09-12 오후 8 11 26" src="https://user-images.githubusercontent.com/29780972/132992563-95aa9578-c953-4cbf-9b44-6397779b3466.png">

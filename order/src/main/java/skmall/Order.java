@@ -15,12 +15,14 @@ public class Order {
     private Long productId;
     private Integer qty;
     private String status;
+    private Long customerId;
 
     @PostPersist
     public void onPostPersist(){
+        
         Ordered ordered = new Ordered();
         BeanUtils.copyProperties(this, ordered);
-        ordered.publishAfterCommit();
+        ordered.publishAfterCommit();        
 
     }
     @PostRemove
@@ -32,10 +34,17 @@ public class Order {
     }
     @PrePersist
     public void onPrePersist(){
+        
         // Get request from Warehouse
-        //skmall.external.Warehouse warehouse =
-        //    Application.applicationContext.getBean(skmall.external.WarehouseService.class)
-        //    .getWarehouse(/** mapping value needed */);
+        /*skmall.external.Warehouse warehouse =
+            OrderApplication.applicationContext.getBean(skmall.external.WarehouseService.class).getWarehouse(productId);
+        
+        if(warehouse.getStock() > 0 ){
+            Ordered ordered = new Ordered();
+            ordered.setStatus("OrderSuccessed");
+            BeanUtils.copyProperties(this, ordered);
+            ordered.publishAfterCommit();
+        } */
 
     }
     @PreRemove
@@ -71,7 +80,12 @@ public class Order {
         this.status = status;
     }
 
+    public Long getCustomerId() {
+        return customerId;
+    }
 
-
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
+    }
 
 }

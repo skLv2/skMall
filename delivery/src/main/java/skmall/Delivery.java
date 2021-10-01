@@ -14,6 +14,8 @@ public class Delivery {
     private Long id;
     private Long orderId;
     private String status;
+    private Long customerId;
+    private Long productId;
 
     @PostPersist
     public void onPostPersist(){
@@ -48,8 +50,18 @@ public class Delivery {
     public void setStatus(String status) {
         this.status = status;
     }
+    public Long getCustomerId() {
+        return customerId;
+    }
 
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
+    }
+    public Long getProductId() {
+        return productId;
+    }
 
-
-
+    public void setProductId(Long productId) {
+        this.productId = productId;
+    }
 }

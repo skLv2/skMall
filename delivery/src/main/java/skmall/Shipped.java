@@ -5,6 +5,8 @@ public class Shipped extends AbstractEvent {
     private Long id;
     private Long orderId;
     private String status;
+    private Long customerId;
+    private Long productId;
 
     public Shipped(){
         super();
@@ -30,5 +32,19 @@ public class Shipped extends AbstractEvent {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+    public Long getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
+    }
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
     }
 }

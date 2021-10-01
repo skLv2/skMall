@@ -19,11 +19,12 @@ public class PolicyHandler{
 
         System.out.println("\n\n##### listener PrepareShip : " + ordered.toJson() + "\n\n");
 
-
-
-        // Sample Logic //
-        // Delivery delivery = new Delivery();
-        // deliveryRepository.save(delivery);
+        Delivery delivery = new Delivery();
+        delivery.setCustomerId(ordered.getCustomerId());
+        delivery.setOrderId(ordered.getId());
+        delivery.setProductId(ordered.getProductId());
+        delivery.setStatus("주문성공");
+        deliveryRepository.save(delivery);
 
     }
     @StreamListener(KafkaProcessor.INPUT)
@@ -32,12 +33,12 @@ public class PolicyHandler{
         if(!orderCancelled.validate()) return;
 
         System.out.println("\n\n##### listener CancelDelivery : " + orderCancelled.toJson() + "\n\n");
-
-
-
-        // Sample Logic //
-        // Delivery delivery = new Delivery();
-        // deliveryRepository.save(delivery);
+        Delivery delivery = new Delivery();
+        delivery.setCustomerId(orderCancelled.getCustomerId());
+        delivery.setOrderId(orderCancelled.getId());
+        delivery.setProductId(orderCancelled.getProductId());
+        delivery.setStatus("주문취소");
+        deliveryRepository.save(delivery);
 
     }
 

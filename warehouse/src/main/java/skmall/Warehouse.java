@@ -14,6 +14,7 @@ public class Warehouse {
     private Long id;
     private String name;
     private Integer stock;
+    private Long productId;
 
     @PostUpdate
     public void onPostUpdate(){
@@ -47,6 +48,13 @@ public class Warehouse {
 
     public void setStock(Integer stock) {
         this.stock = stock;
+    }
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
     }
 
 

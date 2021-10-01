@@ -15,6 +15,7 @@ public class MyPage {
         private Long deliveryId;
         private Integer qty;
         private String status;
+        private Long customerId;
 
 
         public Long getId() {
@@ -58,6 +59,13 @@ public class MyPage {
 
         public void setStatus(String status) {
             this.status = status;
+        }
+        public Long getCustomerId() {
+            return customerId;
+        }
+
+        public void setCustomerId(Long customerId) {
+            this.customerId = customerId;
         }
 
 }

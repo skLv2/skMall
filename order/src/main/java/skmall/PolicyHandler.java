@@ -19,11 +19,11 @@ public class PolicyHandler{
 
         System.out.println("\n\n##### listener UpdateStatus : " + deliveryCancelled.toJson() + "\n\n");
 
-
-
-        // Sample Logic //
-        // Order order = new Order();
-        // orderRepository.save(order);
+        Order order = new Order();
+        order.getCustomerId(deliveryCancelled.getCustomerId());
+        order.getProductId(deliveryCancelled.getProductId());
+        order.setStatus("배송취소");
+        orderRepository.save(order);
 
     }
     @StreamListener(KafkaProcessor.INPUT)
@@ -32,13 +32,13 @@ public class PolicyHandler{
         if(!shipped.validate()) return;
 
         System.out.println("\n\n##### listener UpdateStatus : " + shipped.toJson() + "\n\n");
-
-
-
-        // Sample Logic //
-        // Order order = new Order();
-        // orderRepository.save(order);
-
+        
+        Order order = new Order();
+        order.getCustomerId(shipped.getCustomerId());
+        order.getProductId(shipped.getProductId());
+        order.setStatus("배송성공");
+        orderRepository.save(order);
+        
     }
 
 

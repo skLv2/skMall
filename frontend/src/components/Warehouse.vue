@@ -36,6 +36,12 @@
           <div class="grey--text ml-4" v-else>
             Stock :  {{value.stock }}
           </div>
+          <div class="grey--text ml-4" v-if="editMode" style = "margin-top:-20px;">
+            <v-text-field type="number" label="ProductId" v-model="value.productId"/>
+          </div>
+          <div class="grey--text ml-4" v-else>
+            ProductId :  {{value.productId }}
+          </div>
 
     </v-card-text>
 

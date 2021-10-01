@@ -1,0 +1,54 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-OrderApplication<order>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "skmall.OrderApplication",
+            "projectName": "order",
+            "args": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-WarehouseApplication<warehouse>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "skmall.WarehouseApplication",
+            "projectName": "warehouse",
+            "args": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-MypageApplication<mypage>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "skmall.MypageApplication",
+            "projectName": "mypage",
+            "args": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-DeliveryApplication<delivery>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "skmall.DeliveryApplication",
+            "projectName": "delivery",
+            "args": ""
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-Application<boot-camp-gateway>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "mainClass": "com.example.Application",
+            "projectName": "boot-camp-gateway",
+            "args": ""
+        }
+    ]
+}

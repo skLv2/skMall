@@ -36,6 +36,18 @@
             Status :  {{value.status }}
           </div>
 
+          <div class="grey--text ml-4" v-if="editMode" style = "margin-top:-20px;">
+            <v-text-field type="number" label="CustomerId" v-model="value.customerId"/>
+          </div>
+          <div class="grey--text ml-4" v-else>
+            CustomerId :  {{value.customerId }}
+          </div>
+          <div class="grey--text ml-4" v-if="editMode" style = "margin-top:-20px;">
+            <v-text-field type="number" label="ProductId" v-model="value.productId"/>
+          </div>
+          <div class="grey--text ml-4" v-else>
+            ProductId :  {{value.productId }}
+          </div>
 
     </v-card-text>
 

@@ -5,6 +5,7 @@ public class StockReduced extends AbstractEvent {
     private Long id;
     private String name;
     private Integer stock;
+    private Long productId;
 
     public StockReduced(){
         super();
@@ -30,5 +31,12 @@ public class StockReduced extends AbstractEvent {
 
     public void setStock(Integer stock) {
         this.stock = stock;
+    }
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
     }
 }

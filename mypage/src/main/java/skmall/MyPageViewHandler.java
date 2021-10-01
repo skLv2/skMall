@@ -27,8 +27,10 @@ public class MyPageViewHandler {
             MyPage myPage = new MyPage();
             // view 객체에 이벤트의 Value 를 set 함
             myPage.setOrderId(ordered.getId());
+            myPage.setDeliveryId(ordered.getProductId());
             myPage.setQty(ordered.getQty());
-            myPage.setStatus("주문성공");
+            myPage.setCustomerId(ordered.getCustomerId());
+            myPage.setStatus("OrderSuccessed");
             // view 레파지 토리에 save
             myPageRepository.save(myPage);
 
@@ -48,7 +50,9 @@ public class MyPageViewHandler {
                     for(MyPage myPage : myPageList){
                     // view 객체에 이벤트의 eventDirectValue 를 set 함
                     myPage.setDeliveryId(shipped.getId());
-                    myPage.setStatus("배송시작");
+                    myPage.setStatus("DeliveryStarted");
+                    myPage.setDeliveryId(shipped.getProductId());
+                    myPage.setCustomerId(shipped.getCustomerId());
                 // view 레파지 토리에 save
                 myPageRepository.save(myPage);
                 }
@@ -66,7 +70,7 @@ public class MyPageViewHandler {
                     List<MyPage> myPageList = myPageRepository.findByOrderId(orderCancelled.getId());
                     for(MyPage myPage : myPageList){
                     // view 객체에 이벤트의 eventDirectValue 를 set 함
-                    myPage.setStatus("주문취소");
+                    myPage.setStatus("OrderCancelled");
                 // view 레파지 토리에 save
                 myPageRepository.save(myPage);
                 }
@@ -84,7 +88,7 @@ public class MyPageViewHandler {
                     List<MyPage> myPageList = myPageRepository.findByOrderId(deliveryCancelled.getOrderId());
                     for(MyPage myPage : myPageList){
                     // view 객체에 이벤트의 eventDirectValue 를 set 함
-                    myPage.setStatus("배송취소");
+                    myPage.setStatus("DeliveryCancelled");
                 // view 레파지 토리에 save
                 myPageRepository.save(myPage);
                 }

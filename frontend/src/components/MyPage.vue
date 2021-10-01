@@ -27,6 +27,7 @@
             { text: "deliveryId", value: "deliveryId" },
             { text: "qty", value: "qty" },
             { text: "status", value: "status" },
+            { text: "customerId", value: "customerId" },
         ],
         myPage : [],
     }),

@@ -420,7 +420,7 @@ AWS ECR 적용 현황
 ![image](https://user-images.githubusercontent.com/90441340/135569781-d8b7edc9-a3a2-4fa4-9981-9f1543eef9e0.png)
 
 EKS에 배포된 내용
-![image](https://user-images.githubusercontent.com/90441340/135570299-9452e1a7-c8d3-4185-8a27-0d8822fc9ab2.png)
+![image](https://user-images.githubusercontent.com/90441340/135573203-d3dd3be6-12f2-4bc7-bac7-0d220be1a102.png)
 
 ## ConfigMap 설정
 
@@ -463,68 +463,3 @@ prop:
   aprv:
     url: ${apiurl}
 ``` 
-
-동기 호출 URL 실행
-![5](https://user-images.githubusercontent.com/88864503/133554760-b8d8b524-ebbf-46dc-ba32-1820cffcc023.JPG)
-
-## 무정지 재배포
-
-* 먼저 무정지 재배포가 100% 되는 것인지 확인하기 위해서 Autoscaler 이나 CB 설정을 제거함
-
-- seige 로 배포작업 직전에 워크로드를 모니터링 함.
-```
-siege -c100 -t10S -v --content-type "application/json" 'http://af9a234af8e354f5299f1d049a1b21c0-1150269307.ap-northeast-1.elb.amazonaws.com:8080/reservations
-
-```
-
-```
-# buildspec.yaml 의 readiness probe 의 설정:
-
-                    readinessProbe:
-                      httpGet:
-                        path: /actuator/health
-                        port: 8080
-                      initialDelaySeconds: 10
-                      timeoutSeconds: 2
-                      periodSeconds: 5
-                      failureThreshold: 10
-```
-
-Customer 서비스 신규 버전으로 배포
-![9](https://user-images.githubusercontent.com/88864503/133559167-4a2ede3c-ad33-43b6-b101-8759d56dd0c4.png)
-
-
-배포기간 동안 Availability 가 변화없기 때문에 무정지 재배포가 성공한 것으로 확인됨.
-
-## Liveness Probe
-
-테스트를 위해 buildspec.yml을 아래와 같이 수정 후 배포
-
-```
-livenessProbe:
-                      # httpGet:
-                      #   path: /actuator/health
-                      #   port: 8080
-                      exec:
-                        command:
-                        - cat
-                        - /tmp/healthy
-```
-
-
-![6](https://user-images.githubusercontent.com/88864503/133556583-3315fae7-de8a-4882-ad1d-8493fbd2daa8.png)
-
-pod 상태 확인
- 
- kubectl describe ~ 로 pod에 들어가서 아래 메시지 확인
- ```
- Warning  Unhealthy  26s (x2 over 31s)     kubelet            Liveness probe failed: cat: /tmp/healthy: No such file or directory
- ```
-
-/tmp/healthy 파일 생성
-```
-kubectl exec -it pod/reservation-5576944554-q8jwf -n vaccines -- touch /tmp/healthy
-```
-![7](https://user-images.githubusercontent.com/88864503/133556724-7693dec2-41dd-430c-a3d3-389cc309bfca.png)
-
-성공 확인

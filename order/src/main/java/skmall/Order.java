@@ -36,7 +36,7 @@ public class Order {
     public void onPrePersist(){
         
         // Get request from Warehouse
-        /*skmall.external.Warehouse warehouse =
+        skmall.external.Warehouse warehouse =
             OrderApplication.applicationContext.getBean(skmall.external.WarehouseService.class).getWarehouse(productId);
         
         if(warehouse.getStock() > 0 ){
@@ -44,7 +44,7 @@ public class Order {
             ordered.setStatus("OrderSuccessed");
             BeanUtils.copyProperties(this, ordered);
             ordered.publishAfterCommit();
-        } */
+        }
 
     }
     @PreRemove

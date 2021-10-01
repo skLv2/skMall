@@ -63,6 +63,3 @@ spring:
         event-out:
           destination: skmall
           contentType: application/json
-prop:
-  aprv:
-    url: ${apiurl}

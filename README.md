@@ -184,160 +184,82 @@ SK MALL 서비스
 상품 주문/취소/매핑 등 총 Status 및 백신 종류 에 대하여 고객이 조회 할 수 있도록 CQRS 로 구현하였다.
 - order, delivery, warehouse 개별 Aggregate Status 를 통합 조회하여 성능 Issue 를 사전에 예방할 수 있다.
 - 비동기식으로 처리되어 발행된 이벤트 기반 Kafka 를 통해 수신/처리 되어 별도 Table 에 관리한다
-- Table 모델링
- <img width="546" alt="스크린샷 2021-09-12 오후 8 11 26" src="https://user-images.githubusercontent.com/29780972/132992563-95aa9578-c953-4cbf-9b44-6397779b3466.png">
- 
- - mypage MSA PolicyHandler를 통해 구현
-   ("ReservationPlaced" 이벤트 발생 시, Pub/Sub 기반으로 별도 테이블에 저장)
-   
-   ![image](https://user-images.githubusercontent.com/29780972/132992616-f5e4bec9-45f8-41d1-9690-b09de491d224.png)
-   
-   
-   ("ReservationCompleted" 이벤트 발생 시, Pub/Sub 기반으로 별도 테이블에 저장)
-   ![image](https://user-images.githubusercontent.com/29780972/132992637-3eac9a68-b14e-4b79-9c79-e95e00f76645.png)
-   
-   
-   ("CancelCompleted" 이벤트 발생 시, Pub/Sub 기반으로 별도 테이블에 저장)
-   ![image](https://user-images.githubusercontent.com/29780972/132993526-6f462911-3825-4271-84f9-9ca62235116b.png)
 
-   
+- ("Ordered" 이벤트 발생 시, Pub/Sub 기반으로 별도 테이블에 저장)
+![image](https://user-images.githubusercontent.com/90441340/135565931-61f8a290-ccd3-47b7-97db-72cb628b47c4.png)
 
-- 실제로 view 페이지를 조회해 보면 모든 room에 대한 정보, 예약 상태, 결제 상태 등의 정보를 종합적으로 알 수 있다.
-  
-  ![image](https://user-images.githubusercontent.com/29780972/132992733-dcfb3280-4f6a-4e6c-9b9b-2082067cd941.png)
+- ("Shipped" 이벤트 발생 시, Pub/Sub 기반으로 별도 테이블에 저장)
+![image](https://user-images.githubusercontent.com/90441340/135565963-4aa6be4e-38ef-4162-aaa6-21a532c29dd6.png)
 
+- ("OrderCancelled" 이벤트 발생 시, Pub/Sub 기반으로 별도 테이블에 저장)
+![image](https://user-images.githubusercontent.com/90441340/135565986-999af06e-4023-4e86-8ed8-46f683694d36.png)
 
+- 실제로 view 페이지를 조회해 보면 모든 주문에 대한 정보, 배송 상태 등의 정보를 종합적으로 알 수 있다.
+![image](https://user-images.githubusercontent.com/90441340/135565831-cfd8f183-1a38-48c6-bd48-01cebe4393bf.png)
 
 ## API 게이트웨이
 
  1. gateway 스프링부트 App을 추가 후 application.yaml내에 각 마이크로 서비스의 routes 를 추가하고 gateway 서버의 포트를 8080 으로 설정함
           - application.yaml 예시
 
-       ![image](https://user-images.githubusercontent.com/29780972/132992794-270910ab-22a4-46c1-bdd3-d100c8e50a8e.png)
+       ![image](https://user-images.githubusercontent.com/90441340/135566030-2c073e8b-3695-4629-aff1-b6d864ff54e7.png)
        
-
-
 ## Correlation
-vaccinereservation 프로젝트에서는 PolicyHandler에서 처리 시 어떤 건에 대한 처리인지를 구별하기 위한 Correlation-key 구현을 
+skmall 프로젝트에서는 PolicyHandler에서 처리 시 어떤 건에 대한 처리인지를 구별하기 위한 Correlation-key 구현을 
 이벤트 클래스 안의 변수로 전달받아 서비스간 연관된 처리를 정확하게 구현하고 있습니다. 
 
 아래의 구현 예제를 보면
 
-예약(Reservation)을 하면 동시에 연관된 백신관리(vaccineMgmt), 승인(approval) 등의 서비스의 상태가 적당하게 변경이 되고,
-예약건의 취소를 수행하면 다시 연관된  백신관리(vaccineMgmt), 승인(approval) 등의 서비스의 상태값 등의 데이터가 적당한 상태로 변경되는 것을
+주문(order)을 하면 동시에 연관된 배송상태(delivery)의 서비스의 상태가 적당하게 변경이 되고,
+주문을 취소를 수행하면 다시 연관된  배송상태(delivery), 재고(warehouse)의 서비스의 상태값 등의 데이터가 적당한 상태로 변경되는 것을
 확인할 수 있습니다.
 
-- 백신 예약 요청
-http POST http://localhost:8088/reservations customerid=OHM hospitalid=123 date=20210910
-![image](https://user-images.githubusercontent.com/29780972/133015614-0f9e7fa9-5640-4781-a7c7-76c822b27862.png)
+- 주문 전 재고 등록
+http POST http://localhost:8081/warehouses productId=123 name=TV stock=100
+![image](https://user-images.githubusercontent.com/90441340/135566650-86465c4c-3426-438f-8cd1-44e6fe74866b.png)
 
-"status": "RSV_REQUESTED" 확인
+- 주문
+http POST http://localhost:8082/orders customerId=111 productId=1 qty=1
+![image](https://user-images.githubusercontent.com/90441340/135566814-db347e42-b76f-4905-b383-770997206b21.png)
 
-
-- 예약 후 - 승인 상태
-http GET http://localhost:8088/approvals  
-
-![image](https://user-images.githubusercontent.com/29780972/133015696-5040a152-d1d8-4802-8fed-845eebed088d.png)
-
-"status": "APV_COMPLETED" 확인
-
-- 예약 및 승인 완료 후 - 백신 관리 상태
-http GET http://localhost:8088/vaccineMgmts      
-![image](https://user-images.githubusercontent.com/29780972/133015768-bde17c64-2505-471e-ae37-9d7e1355f48e.png)
-
-reservationID 에 맞춰 백신종류, 수량, 유통기한 등 매핑 확인
-
-- 예약 및 승인 완료 후 백신 관리까지 끝난 후 - 예약 상태
-http GET http://localhost:8088/reservations
-![image](https://user-images.githubusercontent.com/29780972/133015883-05b0af2e-7cad-49c9-a28f-67260e739225.png)
-
-
-"status": "Reservation Completed" 확인
- -> 정상적으로 백신 예약이 완료 된 경우 최종 상태가 Reservaiton Completed
-
-- 예약 취소
-http PATCH http://localhost:8088/reservations/1 status=CANCEL_REQUESTED
-![image](https://user-images.githubusercontent.com/29780972/133016556-cef0467c-a654-4587-aca8-96cd0988069f.png)
-
-"status": "CANCEL_REQUESTED" 확인
-
-- 취소 후 - 백신 상태
-http GET http://localhost:8088/vaccineMgmts    
-![image](https://user-images.githubusercontent.com/29780972/133016651-286a33bb-4f4d-4621-bb30-47e9147bf032.png)
-
-취소 요청한 ID에 따라 수량 0으로 변함 및 백신 종류 등 NULL로 설정 변함 확인
-
-- 취소 후 - 예약 상태
-http GET http://localhost:8088/reservations       
-![image](https://user-images.githubusercontent.com/29780972/133016914-acdd2c05-ec7d-4d1d-ac7d-e4ec6ab3a356.png)
-
-"status": "Reservation Canceled" 
-
-
-
+- 주문 - 확인
+"status": "주문성공" 확인
+![image](https://user-images.githubusercontent.com/90441340/135566978-0ffbe233-ff01-4cf8-8ef7-7b26b16b6065.png)
 
 ## DDD 의 적용
 
-- 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다. (예시는 Reservation 마이크로 서비스). 이때 가능한 현업에서 사용하는 언어 (유비쿼터스 랭귀지)를 그대로 사용하려고 노력했다. 현실에서 발생가는한 이벤트에 의하여 마이크로 서비스들이 상호 작용하기 좋은 모델링으로 구현을 하였다.
+- 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다. (예시는 Order 마이크로 서비스). 이때 가능한 현업에서 사용하는 언어 (유비쿼터스 랭귀지)를 그대로 사용하려고 노력했다. 현실에서 발생가는한 이벤트에 의하여 마이크로 서비스들이 상호 작용하기 좋은 모델링으로 구현을 하였다.
 
 ```
 @Entity
-@Table(name="Reservation_table")
-public class Reservation {
+@Table(name="Order_table")
+public class Order {
 
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
-    private String customerid;
-    private String hospitalid;
-    private String date;
+    private Long productId;
+    private Integer qty;
     private String status;
+    private Long customerId;
 
     @PostPersist
     public void onPostPersist(){
-
-        System.out.println(" ============== 백신 예약 요청 ============== ");
-        ReservationPlaced reservationPlaced = new ReservationPlaced();
-        BeanUtils.copyProperties(this, reservationPlaced);
-        reservationPlaced.publishAfterCommit();
-
-        //Following code causes dependency to external APIs
-        // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
-
-        vaccinereservation.external.Approval approval = new vaccinereservation.external.Approval();
-        // mappings goes here
-        /* 승인(approval) 동기 호출 진행 */
-        /* 승인 진행 가능 여부 확인 후 백신매핑 */
-        if(this.getStatus().equals("RSV_REQUESTED")){
-
-            approval.setReservationid(Long.toString(this.getId()));
-            approval.setStatus("APV_REQUESTED");
-        }
-
-        ReservationApplication.applicationContext.getBean(vaccinereservation.external.ApprovalService.class)
-            .requestapproval(approval);
+        
+        Ordered ordered = new Ordered();
+        BeanUtils.copyProperties(this, ordered);
+        ordered.publishAfterCommit();        
 
     }
-    
+    @PostRemove
+    public void onPostRemove(){
+        OrderCancelled orderCancelled = new OrderCancelled();
+        BeanUtils.copyProperties(this, orderCancelled);
+        orderCancelled.publishAfterCommit();
+
+    }
     @PrePersist
     public void onPrePersist(){
-        System.out.println(" ============== 백신 예약 요청 전 ============== ");
-        status = "RSV_REQUESTED";
-    }
-
-    @PostUpdate
-    public void onPostUpdate(){
-
-        System.out.println(" ============== 백신 취소 요청 ============== ");
-
-        if(this.getStatus().equals("CANCEL_REQUESTED") ){
-            ReservationCanceled reservationCanceled = new ReservationCanceled();
-            BeanUtils.copyProperties(this, reservationCanceled);
-            reservationCanceled.publishAfterCommit();
-        }
-
-        
-
     }
     @PreRemove
     public void onPreRemove(){
@@ -350,26 +272,19 @@ public class Reservation {
     public void setId(Long id) {
         this.id = id;
     }
-    public String getCustomerid() {
-        return customerid;
+    public Long getProductId() {
+        return productId;
     }
 
-    public void setCustomerid(String customerid) {
-        this.customerid = customerid;
+    public void setProductId(Long productId) {
+        this.productId = productId;
     }
-    public String getHospitalid() {
-        return hospitalid;
-    }
-
-    public void setHospitalid(String hospitalid) {
-        this.hospitalid = hospitalid;
-    }
-    public String getDate() {
-        return date;
+    public Integer getQty() {
+        return qty;
     }
 
-    public void setDate(String date) {
-        this.date = date;
+    public void setQty(Integer qty) {
+        this.qty = qty;
     }
     public String getStatus() {
         return status;
@@ -378,269 +293,117 @@ public class Reservation {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    public Long getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
+    }
+
 }
 ```
 
 - Entity Pattern 과 Repository Pattern 을 적용하여 JPA 를 통하여 다양한 데이터소스 유형 (RDB or NoSQL) 에 대한 별도의 처리가 없도록 데이터 접근 어댑터를 자동 생성하기 위하여 Spring Data REST 의 RestRepository 를 적용하였다
 
 ```
-package vaccinereservation;
+package skmall;
 
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
-@RepositoryRestResource(collectionResourceRel="reservations", path="reservations")
-public interface ReservationRepository extends PagingAndSortingRepository<Reservation, Long>{
-
+@RepositoryRestResource(collectionResourceRel="orders", path="orders")
+public interface OrderRepository extends PagingAndSortingRepository<Order, Long>{
 }
 ```
 
 - 적용 후 REST API 의 테스트
 
 ```
-#reservation 서비스의 백신 예약 요청
-http POST http://localhost:8088/reservations customerid=OHM hospitalid=123 date=20210910
+#order 서비스의 주문 요청
+http POST http://localhost:8082/orders customerId=111 productId=1 qty=1
 
-#reservation 서비스의 백신 취소 요청
-http PATCH http://localhost:8088/reservations/1 status=CANCEL_REQUESTED
+#order 서비스의 주문 취소 요청
+http PATCH http://localhost:8082/orders/1 status="주문취소"
 
-#reservation 서비스의 백신 예약 상태 및 백신 종류 확인
-http GET http://localhost:8088/reservations
+#order 서비스의 주문 상태 확인
+http GET http://localhost:8082/orders
 
-#vaccineMgmts 서비스의 및 유통기한등 백신 정보 확인
-http GET http://localhost:8088/vaccineMgmts   
+#warehouse 상품 및 
+http GET http://localhost:8081/warehouse
 ```
 
 
 ## 동기식 호출(Sync) 과 Fallback 처리
 
-분석단계에서의 조건 중 하나로 예약(reservation)->승인(approval) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 
+분석단계에서의 조건 중 하나로 주문(order)-> 재고확인(warehouse) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 
 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient로 이용하여 호출하도록 한다.
 
 - 승인 서비스를 호출하기 위하여 Stub과 (FeignClient) 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현 
 
 ```
-#ReservationService.java
+#WarehouseService.java
 
-@FeignClient(name="approval", url="${prop.aprv.url}")
-public interface ApprovalService {
-    @RequestMapping(method= RequestMethod.POST, path="/approvals")
-    public void requestapproval(@RequestBody Approval approval);
+import java.util.Date;
+
+@FeignClient(name="warehouse", url="${api.warehouse.url}")
+public interface WarehouseService {
+    @RequestMapping(method= RequestMethod.GET, path="/warehouses/{id}")
+    public Warehouse getWarehouse(@PathVariable("id") Long id);
 
 }
-
 ```
 
-- 예약 요청을 받은 직후(@PostPersist) 승인여부를 동기(Sync)로 요청하도록 처리
-
+- 주문 요청을 받기 전(@PrePersist) 재고 확인을 동기(Sync)로 요청하도록 처리
+![image](https://user-images.githubusercontent.com/90441340/135559136-76b36777-c869-42bd-8a73-ac41bd8a0896.png)
 ```
-#Reservation.java
+#Order.java
 
-@PostPersist
-    public void onPostPersist(){
+@PrePersist
+public void onPrePersist(){
 
-        System.out.println(" ============== 백신 예약 요청 ============== ");
-        ReservationPlaced reservationPlaced = new ReservationPlaced();
-        BeanUtils.copyProperties(this, reservationPlaced);
-        reservationPlaced.publishAfterCommit();
+// Get request from Warehouse
+skmall.external.Warehouse warehouse =
+    OrderApplication.applicationContext.getBean(skmall.external.WarehouseService.class).getWarehouse(productId);
 
-        //Following code causes dependency to external APIs
-        // it is NOT A GOOD PRACTICE. instead, Event-Policy mapping is recommended.
+if(warehouse.getStock() > 0 ){
+    Ordered ordered = new Ordered();
+    ordered.setStatus("OrderSuccessed");
+    BeanUtils.copyProperties(this, ordered);
+    ordered.publishAfterCommit();
+} 
 
-        vaccinereservation.external.Approval approval = new vaccinereservation.external.Approval();
-        // mappings goes here
-        /* 승인(approval) 동기 호출 진행 */
-        /* 승인 진행 가능 여부 확인 후 백신매핑 */
-        if(this.getStatus().equals("RSV_REQUESTED")){
-
-            approval.setReservationid(Long.toString(this.getId()));
-            approval.setStatus("APV_REQUESTED");
-        }
-
-        ReservationApplication.applicationContext.getBean(vaccinereservation.external.ApprovalService.class)
-            .requestapproval(approval);
-
-    }
+}
     
 ```
 
-- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인
+- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, warehouse 시스템이 장애가 나면 주문도 못받는다는 것을 확인
 
 ```
-# 승인 (approval) 서비스를 잠시 내려놓음 (ctrl+c)
+# warehouse 서비스를 잠시 내려놓음
 ```
 ```
-# 예약 요청  - Fail
-
-http POST http://localhost:8088/reservations customerid=OHM hospitalid=123 date=20210910
+# 주문 요청  - status:null 확인
+http POST http://localhost:8082/orders customerId=111 productId=1 qty=1
 ```
-
-![image](https://user-images.githubusercontent.com/29780972/133050695-e81902a6-838c-4373-a628-9eea14bc9753.png)
-
+![image](https://user-images.githubusercontent.com/90441340/135569218-7e710522-48bb-4fba-bfbd-3caf0937ba69.png)
 ```
-# 결제서비스 재기동
-cd approvals
+# warehouse 서비스 재기동
+cd warehouse
 mvn spring-boot:run
 ```
 
 ```
-# 예약 요청  - Success
+# 주문 요청  - Success
 
-http POST http://localhost:8088/reservations customerid=OHM hospitalid=123 date=20210910
-
+http POST http://localhost:8082/orders customerId=111 productId=1 qty=1
 ```
 
-![image](https://user-images.githubusercontent.com/29780972/133050824-fd9f857b-e22b-45bd-948f-f4dcf4223133.png)
+![image](https://user-images.githubusercontent.com/90441340/135566978-0ffbe233-ff01-4cf8-8ef7-7b26b16b6065.png)
 
 
 - 또한 과도한 요청시에 서비스 장애가 도미노 처럼 벌어질 수 있다. (서킷브레이커 처리는 운영단계에서 설명한다.)
-
-
-## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
-
-승인가 이루어진 후에 예약 시스템의 상태가 업데이트 되고, 백신관리 시스템의 상태 업데이트가 비동기식으로 호출된다.
-- 이를 위하여 승인이 완료되면 승인 완료 되었다는 이벤트를 카프카로 송출한다. (Publish)
-
-```
-#Approval.java
-
-@Entity
-@Table(name="Approval_table")
-public class Approval {
-
-    @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
-    private Long id;
-    private String reservationid;
-    private String status;
-
-    @PostPersist
-    public void onPostPersist(){
-
-        System.out.println(" ============== 예약 승인 요청 ============== ");
-
-        ApprovalFinished approvalFinished = new ApprovalFinished();
-        BeanUtils.copyProperties(this, approvalFinished);
-        approvalFinished.publishAfterCommit();
-
-    }
-    
-    ....
-
-```
-
-
-- 백신관리 시스템에서는 승인 완료된 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
-
-```
-@Service
-public class PolicyHandler{
-    @Autowired VaccineMgmtRepository vaccineMgmtRepository;
-
-    @StreamListener(KafkaProcessor.INPUT)
-    public void wheneverApprovalFinished_CheckReservation(@Payload ApprovalFinished approvalFinished){
-
-        if(!approvalFinished.validate()) return;
-
-        System.out.println("\n\n##### listener CheckReservation : " + approvalFinished.toJson() + "\n\n");
-	
-        // VaccineMgmt vaccineMgmt = new VaccineMgmt();
-        // vaccineMgmtRepository.save(vaccineMgmt);
-        VaccineMgmt vaccinemgmt = new VaccineMgmt();
-        vaccinemgmt.setReservationid(approvalFinished.getReservationid());
-        vaccinemgmt.setVaccinetype("모더나");
-        vaccinemgmt.setProductiondate("2021-09-01");
-        vaccinemgmt.setShelflife("2021-09-30");
-        vaccinemgmt.setQty(1);
-        vaccineMgmtRepository.save(vaccinemgmt);
-
-    }
-    
-    ....
-
-```
-
-그 외 예약 승인/거부는 백신 관리와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, 유지보수로 인해 잠시 내려간 상태 라도 예약을 받는데 문제가 없다.
-
-```
-# 백신관리 서비스 (vaccineMgmt) 를 잠시 내려놓음 (ctrl+c)
-```
-
-```
-# 예약 요청  - Success
-http POST http://localhost:8088/reservations customerid=OHM hospitalid=123 date=20210910
-```
-
-![image](https://user-images.githubusercontent.com/29780972/133051128-ec32ffd9-4c8e-4be7-a5a9-93638d3af1a8.png)
-
-```
-# 예약 상태 확인  - vaccineMgmt 서비스와 상관없이 예약 상태는 정상 확인
-http GET http://localhost:8088/reservations
-```
-
-![image](https://user-images.githubusercontent.com/29780972/133051194-269034b4-2d0c-4d11-8b88-638a851b8390.png)
-
-http://localhost:8081/reservations/3은 id=2와 달리 "status": "RSV_REQUESTED" 에서 끝난것을 확인
-
-
-## 폴리글랏 퍼시스턴스
-
-viewPage 는 H2가 아닌 RDB 계열의 데이터베이스인 Maria DB 를 사용하기로 하였다. 
-기존의 Entity Pattern 과 Repository Pattern 적용과 데이터베이스 관련 설정 (pom.xml, application.yml) 을 변경하였으며, mypage pom.xml에 maria DB 의존성을 추가 하였다.
-위 작업을 통해 maria DB를 부착하였으며 아래와 같이 작업 진행됨을 확인할 수 있다.
-
-```
-#MyPage.java
-
-@Entity
-@Table(name="MyPage_table")
-public class MyPage {
-
-}
-
-#MyPageRepository.java
-
-package vaccinereservation;
-
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.data.repository.query.Param;
-
-import java.util.List;
-
-public interface MyPageRepository extends CrudRepository<MyPage, Long> {
-
-    MyPage findByReservationid(String reservationid);
-
-}
-
-#pom.xml
-
-    		<dependency> 
-			<groupId>org.mariadb.jdbc</groupId> 
-			<artifactId>mariadb-java-client</artifactId> 
-		</dependency>
-
-# application.yml
- jpa:
-      show_sql: true
-      #format_sql: true
-      generate-ddl: true
-      hibernate:
-        ddl-auto: create-drop
-  
-  datasource:
-    url: jdbc:mariadb://localhost:3306/VaccineReservation
-    driver-class-name: org.mariadb.jdbc.Driver
-    username:  ####   (계정정보 숨김처리)
-    password:  ####   (계정정보 숨김처리)
-    			
-```
-
-실제 MariaDB 접속하여 확인 시, 데이터 확인 가능 (ex. Reservation에서 객실 예약 요청한 경우)
-
-![image](https://user-images.githubusercontent.com/29780972/132993463-ab6d81b5-0d03-4a44-b922-7cb7e5cf023f.png)
-
-
 
 # 운영
 
@@ -648,25 +411,16 @@ public interface MyPageRepository extends CrudRepository<MyPage, Long> {
 각 구현체들은 각자의 source repository 에 구성되었고, 사용한 CI/CD 플랫폼은 AWS를 사용하였으며, pipeline build script 는 각 프로젝트 폴더 이하 buildspec.yml 에 포함되었다.
 
 AWS CodeBuild 적용 현황
-![1](https://user-images.githubusercontent.com/88864503/133553458-2ecf1f10-3c01-4b3d-bcaa-84f268f7848a.JPG)
+![image](https://user-images.githubusercontent.com/90441340/135569444-c362009e-7ca3-49fa-a916-e23e2587506a.png)
 
 webhook을 통한 CI 확인
-![image (4)](https://user-images.githubusercontent.com/90441340/133560216-eeecca1e-5376-48f7-bd85-23bf4bfda961.png)
+![image](https://user-images.githubusercontent.com/90441340/135569595-2895927e-a1b4-4b6f-ae1b-97dc057544ac.png)
 
 AWS ECR 적용 현황
-![3](https://user-images.githubusercontent.com/88864503/133553933-30d2ba69-ec96-4b26-838b-33e2d061bb70.JPG)
+![image](https://user-images.githubusercontent.com/90441340/135569781-d8b7edc9-a3a2-4fa4-9981-9f1543eef9e0.png)
 
 EKS에 배포된 내용
-![4](https://user-images.githubusercontent.com/88864503/133554057-b6c08a0a-04ce-4dd5-bc47-f01e9776373d.JPG)
-
-POST 결과
-![image (3)](https://user-images.githubusercontent.com/90441340/133559842-6a03776f-5e1b-465e-8bea-eabf1384b45c.png)
-
-GET 결과
-![image](https://user-images.githubusercontent.com/90441340/133559721-ba7d924b-76eb-4a97-b4b5-2d3c97e1771a.png)
-![image (1)](https://user-images.githubusercontent.com/90441340/133559794-7fa37299-5368-42f2-8775-7b9e1dbc65b8.png)
-![image (2)](https://user-images.githubusercontent.com/90441340/133559797-f0942cec-0275-4c60-b0b7-7412a3a7d088.png)
-
+![image](https://user-images.githubusercontent.com/90441340/135570299-9452e1a7-c8d3-4185-8a27-0d8822fc9ab2.png)
 
 ## ConfigMap 설정
 
@@ -680,10 +434,10 @@ GET 결과
  apiVersion: v1
  kind: ConfigMap
  metadata:
-   name: vaccine-configmap
-   namespace: vaccines
+   name: skmall-configmap
+   namespace: skmall
  data:
-   apiurl: "http://user02-gateway:8080"
+   apiurl: "http://user17-gateway:8080"
 
 ```
 buildspec 수정
@@ -699,7 +453,7 @@ buildspec 수정
                     - name: apiurl
                       valueFrom:
                         configMapKeyRef:
-                          name: vaccine-configmap
+                          name: skmall-configmap
                           key: apiurl 
                         
 ```            

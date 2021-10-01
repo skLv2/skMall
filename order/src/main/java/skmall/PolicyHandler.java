@@ -20,8 +20,8 @@ public class PolicyHandler{
         System.out.println("\n\n##### listener UpdateStatus : " + deliveryCancelled.toJson() + "\n\n");
 
         Order order = new Order();
-        order.getCustomerId(deliveryCancelled.getCustomerId());
-        order.getProductId(deliveryCancelled.getProductId());
+        order.setCustomerId(deliveryCancelled.getCustomerId());
+        order.setProductId(deliveryCancelled.getProductId());
         order.setStatus("배송취소");
         orderRepository.save(order);
 
@@ -34,8 +34,8 @@ public class PolicyHandler{
         System.out.println("\n\n##### listener UpdateStatus : " + shipped.toJson() + "\n\n");
         
         Order order = new Order();
-        order.getCustomerId(shipped.getCustomerId());
-        order.getProductId(shipped.getProductId());
+        order.setCustomerId(shipped.getCustomerId());
+        order.setProductId(shipped.getProductId());
         order.setStatus("배송성공");
         orderRepository.save(order);
         
